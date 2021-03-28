@@ -28,13 +28,15 @@ export const getConfig = () => {
 
   const config = require(targetFile) as Config;
 
-  if (!config.symbol_url || !/^(https?:)?\/\//.test(config.symbol_url)) {
-    console.warn(colors.red('You are required to provide symbol_url'));
-    process.exit(1);
-  }
+  if (config.symbol_url) {
+    if (!/^(https?:)?\/\//.test(config.symbol_url)) {
+      console.warn(colors.red('You are required to provide symbol_url'));
+      process.exit(1);
+    }
 
-  if (config.symbol_url.indexOf('//') === 0) {
-    config.symbol_url = 'http:' + config.symbol_url;
+    if (config.symbol_url.indexOf('//') === 0) {
+      config.symbol_url = 'http:' + config.symbol_url;
+    }
   }
 
   config.save_dir = config.save_dir || defaultConfig.save_dir;

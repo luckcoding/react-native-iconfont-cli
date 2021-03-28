@@ -10,9 +10,13 @@ const config = getConfig()
 
 const localSvg = parseLocalSvg(config)
 
-fetchXml(config.symbol_url).then((result) => {
-  generateComponent(result, localSvg, config)
-}).catch((e) => {
-  console.error(colors.red(e.message || 'Unknown Error'))
-  process.exit(1)
-})
+if (config.symbol_url) {
+  fetchXml(config.symbol_url).then((result) => {
+    generateComponent(result, localSvg, config)
+  }).catch((e) => {
+    console.error(colors.red(e.message || 'Unknown Error'))
+    process.exit(1)
+  })
+} else {
+  generateComponent(null, localSvg, config)
+}

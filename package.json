@@ -1,6 +1,6 @@
 {
-  "name": "react-native-iconfont-cli",
-  "version": "2.2.1",
+  "name": "@crude/react-native-iconfont-cli",
+  "version": "0.0.1",
   "main": "index.js",
   "keywords": [
     "iconfont",

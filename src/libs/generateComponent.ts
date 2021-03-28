@@ -29,7 +29,7 @@ const SVG_MAP = {
 
 const ATTRIBUTE_FILL_MAP = ['path'];
 
-export const generateComponent = (data: XmlData, localSvg: ILocalSvg[], config: Config) => {
+export const generateComponent = (data: XmlData | null, localSvg: ILocalSvg[], config: Config) => {
   const svgComponents: Set<string> = new Set();
   const names: string[] = [];
   const imports: string[] = [];
@@ -50,57 +50,59 @@ export const generateComponent = (data: XmlData, localSvg: ILocalSvg[], config: 
     copyTemplate('helper.d.ts', path.join(saveDir, 'helper.d.ts'));
   }
 
-  data.svg.symbol.forEach((item, index) => {
-    let singleFile: string;
-    const currentSvgComponents = new Set<string>(['Svg']);
-    const iconId = item.$.id;
-    const iconIdAfterTrim = config.trim_icon_prefix
-      ? iconId.replace(
-        new RegExp(`^${config.trim_icon_prefix}(.+?)$`),
-        (_, value) => value.replace(/^[-_.=+#@!~*]+(.+?)$/, '$1')
-      )
-      : iconId;
-    const componentName = upperFirst(camelCase(iconId));
+  if (data) {
+    data.svg.symbol.forEach((item, index) => {
+      let singleFile: string;
+      const currentSvgComponents = new Set<string>(['Svg']);
+      const iconId = item.$.id;
+      const iconIdAfterTrim = config.trim_icon_prefix
+        ? iconId.replace(
+          new RegExp(`^${config.trim_icon_prefix}(.+?)$`),
+          (_, value) => value.replace(/^[-_.=+#@!~*]+(.+?)$/, '$1')
+        )
+        : iconId;
+      const componentName = upperFirst(camelCase(iconId));
 
-    names.push(iconIdAfterTrim);
+      names.push(iconIdAfterTrim);
 
-    if (config.use_typescript) {
-      currentSvgComponents.add('GProps');
-    }
-
-    for (const domName of Object.keys(item)) {
-      switch (domName) {
-        case 'path':
-          currentSvgComponents.add('Path');
-          break;
-        default:
-          // no default
+      if (config.use_typescript) {
+        currentSvgComponents.add('GProps');
       }
-    }
 
-    cases += `${whitespace(4)}case '${iconIdAfterTrim}':\n`;
+      for (const domName of Object.keys(item)) {
+        switch (domName) {
+          case 'path':
+            currentSvgComponents.add('Path');
+            break;
+          default:
+            // no default
+        }
+      }
 
-    imports.push(componentName);
-    cases += `${whitespace(6)}return <${componentName} key="${index + 1}" {...rest} />;\n`;
+      cases += `${whitespace(4)}case '${iconIdAfterTrim}':\n`;
 
-    singleFile = getTemplate('SingleIcon' + jsxExtension);
-    singleFile = replaceSize(singleFile, config.default_icon_size);
-    singleFile = replaceSvgComponents(singleFile, currentSvgComponents);
-    singleFile = replaceComponentName(singleFile, componentName);
-    singleFile = replaceSingleIconContent(singleFile, generateCase(item, 4));
-    singleFile = replaceHelper(singleFile);
+      imports.push(componentName);
+      cases += `${whitespace(6)}return <${componentName} key="${index + 1}" {...rest} />;\n`;
 
-    fs.writeFileSync(path.join(saveDir, componentName + jsxExtension), singleFile);
+      singleFile = getTemplate('SingleIcon' + jsxExtension);
+      singleFile = replaceSize(singleFile, config.default_icon_size);
+      singleFile = replaceSvgComponents(singleFile, currentSvgComponents);
+      singleFile = replaceComponentName(singleFile, componentName);
+      singleFile = replaceSingleIconContent(singleFile, generateCase(item, 4));
+      singleFile = replaceHelper(singleFile);
 
-    if (!config.use_typescript) {
-      let typeDefinitionFile = getTemplate('SingleIcon.d.ts');
+      fs.writeFileSync(path.join(saveDir, componentName + jsxExtension), singleFile);
 
-      typeDefinitionFile = replaceComponentName(typeDefinitionFile, componentName);
-      fs.writeFileSync(path.join(saveDir, componentName + '.d.ts'), typeDefinitionFile);
-    }
+      if (!config.use_typescript) {
+        let typeDefinitionFile = getTemplate('SingleIcon.d.ts');
 
-    console.log(`${colors.green('√')} Generated icon "${colors.yellow(iconId)}"`);
-  });
+        typeDefinitionFile = replaceComponentName(typeDefinitionFile, componentName);
+        fs.writeFileSync(path.join(saveDir, componentName + '.d.ts'), typeDefinitionFile);
+      }
+
+      console.log(`${colors.green('√')} Generated icon "${colors.yellow(iconId)}"`);
+    });
+  }
 
   /**
    * 本地文件添加
